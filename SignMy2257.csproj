@@ -8,7 +8,7 @@
     <AssemblyName>SignMy2257</AssemblyName>
     <Version>1.0.0</Version>
     <Description>FBI 2257 Form Processing Application</Description>
-    <Authors>Your Name</Authors>
+    <Authors>Byron Scott Jones - byronjones@outlook.com </Authors>
   </PropertyGroup>
 
   <ItemGroup>
