@@ -1,0 +1,346 @@
+@page "/form"
+@using SignMy2257.Models
+@using SignMy2257.Services
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.JSInterop
+@inject IHttpClientFactory HttpClientFactory
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            @if (string.IsNullOrEmpty(FormId))
+            {
+                <h1>FBI Form 2257 - Producer Entry</h1>
+                <form @onsubmit="HandleProducerSubmit">
+                    <div class="form-group mb-3">
+                        <label for="fullName">Full Legal Name *</label>
+                        <input type="text" class="form-control" id="fullName" @bind="producerForm.FullLegalName" @bind:event="oninput" required />
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="company">Company Name *</label>
+                        <input type="text" class="form-control" id="company" @bind="producerForm.CompanyName" @bind:event="oninput" required />
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="address">Address *</label>
+                        <input type="text" class="form-control" id="address" @bind="producerForm.Address" @bind:event="oninput" required />
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="production">Production Name *</label>
+                        <input type="text" class="form-control" id="production" @bind="producerForm.ProductionName" required />
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="date">Date of Production *</label>
+                        <input type="date" class="form-control" id="date" @bind="producerForm.DateOfProduction" required />
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="location">Location of Production *</label>
+                        <input type="text" class="form-control" id="location" @bind="producerForm.LocationOfProduction" required />
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-link"></i> Create 2257 Form URL for Performers
+                    </button>
+                </form>
+
+                @if (!string.IsNullOrEmpty(ErrorMessage))
+                {
+                    <div class="alert alert-danger mt-3">@ErrorMessage</div>
+                }
+            }
+            else
+            {
+                <h1>FBI Form 2257 - Performer Entry</h1>
+                
+                @if (!FormLoaded)
+                {
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                }
+                else
+                {
+                    <form @onsubmit="HandlePerformerSubmit">
+                        <div class="alert alert-info">
+                            <strong>Producer Information:</strong>
+                            <p>@ProducerData?.FullLegalName - @ProducerData?.CompanyName</p>
+                        </div>
+
+                        <h3>Your Information</h3>
+
+                        <div class="form-group mb-3">
+                            <label for="perfFullName">Full Legal Name *</label>
+                            <input type="text" class="form-control" id="perfFullName" @bind="performerForm.FullLegalName" required />
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="aliases">Aliases</label>
+                            <input type="text" class="form-control" id="aliases" @bind="performerForm.Aliases" />
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="stageName">Stage Name *</label>
+                            <input type="text" class="form-control" id="stageName" @bind="performerForm.StageName" required />
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="dob">Date of Birth *</label>
+                            <input type="date" class="form-control" id="dob" @bind="performerForm.DateOfBirth" required />
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="perfAddress">Address *</label>
+                            <textarea class="form-control" id="perfAddress" @bind="performerForm.Address" required></textarea>
+                        </div>
+
+                        <h3 class="mt-4">Identity Documents</h3>
+                        <p class="text-muted">Upload JPG or PNG images, max 2MB each</p>
+
+                        <div class="form-group mb-3">
+                            <label for="idFront">Front of ID *</label>
+                            <InputFile id="idFront" accept=".jpg,.jpeg,.png" class="form-control" 
+                                       OnChange="HandleIdFrontUpload" />
+                            @if (!string.IsNullOrEmpty(idFrontPreview))
+                            {
+                                <div class="mt-2">
+                                    <img src="@idFrontPreview" style="max-width: 200px; max-height: 200px;" />
+                                </div>
+                            }
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="idBack">Back of ID *</label>
+                            <InputFile id="idBack" accept=".jpg,.jpeg,.png" class="form-control"
+                                       OnChange="HandleIdBackUpload" />
+                            @if (!string.IsNullOrEmpty(idBackPreview))
+                            {
+                                <div class="mt-2">
+                                    <img src="@idBackPreview" style="max-width: 200px; max-height: 200px;" />
+                                </div>
+                            }
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="idFace">ID with Face *</label>
+                            <InputFile id="idFace" accept=".jpg,.jpeg,.png" class="form-control"
+                                       OnChange="HandleIdFaceUpload" />
+                            @if (!string.IsNullOrEmpty(idFacePreview))
+                            {
+                                <div class="mt-2">
+                                    <img src="@idFacePreview" style="max-width: 200px; max-height: 200px;" />
+                                </div>
+                            }
+                        </div>
+
+                        <h3 class="mt-4">Social Media (Optional)</h3>
+                        <div id="socialMediaContainer">
+                            @foreach (var (account, index) in performerForm.SocialMediaAccounts?.Select((a, i) => (a, i)) ?? Enumerable.Empty<(SocialMediaAccount, int)>())
+                            {
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <input type="text" class="form-control" placeholder="Platform" @bind="account.Platform" />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="text" class="form-control" placeholder="Account Name" @bind="account.AccountName" />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="url" class="form-control" placeholder="URL" @bind="account.Url" />
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <button type="button" class="btn btn-secondary mb-3" @onclick="AddSocialMedia">+ Add Social Media</button>
+
+                        @if (!string.IsNullOrEmpty(ErrorMessage))
+                        {
+                            <div class="alert alert-danger">@ErrorMessage</div>
+                        }
+
+                        <button type="submit" class="btn btn-success btn-lg w-100">
+                            <i class="fas fa-check"></i> Complete Form
+                        </button>
+                    </form>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    public string? Id { get; set; }
+
+    private string? FormId;
+    private ProducerData? ProducerData;
+    private ProducerFormRequest producerForm = new();
+    private PerformerFormRequest performerForm = new() { SocialMediaAccounts = new() };
+    private string? ErrorMessage;
+    private bool FormLoaded = false;
+    private string? idFrontPreview;
+    private string? idBackPreview;
+    private string? idFacePreview;
+
+    protected override async Task OnInitializedAsync()
+    {
+        FormId = Id;
+        
+        if (!string.IsNullOrEmpty(FormId))
+        {
+            await LoadProducerForm();
+        }
+    }
+
+    private async Task LoadProducerForm()
+    {
+        try
+        {
+            var client = HttpClientFactory.CreateClient();
+            var response = await client.GetAsync($"/api/forms/producer/{FormId}");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                ProducerData = await response.Content.ReadFromJsonAsync<ProducerData>();
+                FormLoaded = true;
+            }
+            else
+            {
+                ErrorMessage = "Form not found";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error loading form: {ex.Message}";
+        }
+    }
+
+    private async Task HandleProducerSubmit()
+    {
+        try
+        {
+            var client = HttpClientFactory.CreateClient();
+            var response = await client.PostAsJsonAsync("/api/forms/producer", producerForm);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<ProducerFormResponse>();
+                FormId = result?.FormId;
+                await LoadProducerForm();
+                
+                // Show success with URL
+                var url = $"{Navigation.BaseUri}form?id={FormId}";
+                await JS.InvokeVoidAsync("navigator.clipboard.writeText", url);
+                ErrorMessage = $"Form created! URL copied to clipboard: {url}";
+            }
+            else
+            {
+                var error = await response.Content.ReadFromJsonAsync<FormValidationResponse>();
+                ErrorMessage = string.Join(", ", error?.Errors ?? new List<string> { "Error creating form" });
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error: {ex.Message}";
+        }
+    }
+
+    private async Task HandleImageUpload(InputFileChangeEventArgs e, string imageType)
+    {
+        var file = e.GetMultipleFiles().FirstOrDefault();
+        if (file != null)
+        {
+            try
+            {
+                var content = new MultipartFormDataContent();
+                content.Add(new StreamContent(file.OpenReadStream(maxAllowedSize: 2097152)), "file", file.Name);
+                
+                var client = HttpClientFactory.CreateClient();
+                var response = await client.PostAsync($"/api/forms/images/{FormId}?imageType={imageType}", content);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    // Show preview
+                    var buffer = new byte[file.Size];
+                    await file.OpenReadStream(maxAllowedSize: 2097152).ReadAsync(buffer, 0, (int)file.Size);
+                    var base64 = Convert.ToBase64String(buffer);
+                    var dataUrl = $"data:{file.ContentType};base64,{base64}";
+                    
+                    if (imageType == "IDFront") idFrontPreview = dataUrl;
+                    else if (imageType == "IDBack") idBackPreview = dataUrl;
+                    else if (imageType == "IDFace") idFacePreview = dataUrl;
+                }
+                else
+                {
+                    ErrorMessage = "Error uploading image";
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = $"Error: {ex.Message}";
+            }
+        }
+    }
+
+    private void AddSocialMedia()
+    {
+        performerForm.SocialMediaAccounts?.Add(new SocialMediaAccount());
+    }
+
+    private async Task HandlePerformerSubmit()
+    {
+        try
+        {
+            var client = HttpClientFactory.CreateClient();
+            
+            // First, submit performer form
+            var submitResponse = await client.PostAsJsonAsync($"/api/forms/performer/{FormId}", performerForm);
+            if (!submitResponse.IsSuccessStatusCode)
+            {
+                var error = await submitResponse.Content.ReadFromJsonAsync<FormValidationResponse>();
+                ErrorMessage = string.Join(", ", error?.Errors ?? new List<string> { "Error submitting form" });
+                return;
+            }
+
+            // Then generate and download PDF
+            var pdfResponse = await client.PostAsync($"/api/forms/validate-complete/{FormId}", null);
+            
+            if (pdfResponse.IsSuccessStatusCode)
+            {
+                var fileBytes = await pdfResponse.Content.ReadAsByteArrayAsync();
+                var fileName = $"Form_2257_{FormId}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+                await JS.InvokeVoidAsync("downloadFile", fileBytes, fileName);
+                ErrorMessage = "Form completed successfully! PDF downloading...";
+            }
+            else
+            {
+                var error = await pdfResponse.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+                ErrorMessage = $"Error completing form: {error?["error"] ?? "Unknown error"}";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error: {ex.Message}";
+        }
+    }
+
+    private async Task HandleIdFrontUpload(InputFileChangeEventArgs e)
+    {
+        await HandleImageUpload(e, "IDFront");
+    }
+
+    private async Task HandleIdBackUpload(InputFileChangeEventArgs e)
+    {
+        await HandleImageUpload(e, "IDBack");
+    }
+
+    private async Task HandleIdFaceUpload(InputFileChangeEventArgs e)
+    {
+        await HandleImageUpload(e, "IDFace");
+    }
+}

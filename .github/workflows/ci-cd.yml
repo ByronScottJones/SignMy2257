@@ -1,0 +1,139 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '9.0.x'
+    
+    - name: Restore dependencies
+      run: dotnet restore
+    
+    - name: Build
+      run: dotnet build -c Release --no-restore
+    
+    - name: Run tests
+      run: dotnet test -c Release --no-build --verbosity normal
+    
+    - name: Build Docker image
+      if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+      run: |
+        docker build -t form2257:${{ github.sha }} .
+        docker tag form2257:${{ github.sha }} form2257:latest
+    
+    - name: Run security scan
+      run: |
+        dotnet add package SecurityCodeScan --version 5.6.7
+        dotnet build -p:TreatWarningsAsErrors=true
+
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Markdown Lint
+      uses: nosborn/github-action-markdown-cli@v3.3.0
+      with:
+        files: .
+        config_file: .markdownlintrc
+    
+    - name: YAML Lint
+      uses: ibiqlik/action-yamllint@v3
+
+  code-quality:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '9.0.x'
+    
+    - name: Install SonarCloud scanner
+      run: dotnet tool install --global dotnet-sonarscanner
+    
+    - name: Analyze with SonarCloud
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      run: |
+        dotnet restore
+        dotnet sonarscanner begin /k:"yourusername_SignMy2257" /o:"yourusername" /d:sonar.host.url=https://sonarcloud.io /d:sonar.login=${{ secrets.SONAR_TOKEN }} /d:sonar.cs.coverage.reportPaths=coverage.opencover.xml
+        dotnet build -c Release
+        dotnet test /p:CollectCoverage=true /p:CoverageFormat=opencover
+        dotnet sonarscanner end /d:sonar.login=${{ secrets.SONAR_TOKEN }}
+
+  deploy-staging:
+    needs: [ build, lint, code-quality ]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Deploy to staging
+      env:
+        DEPLOY_KEY: ${{ secrets.STAGING_DEPLOY_KEY }}
+        DEPLOY_HOST: ${{ secrets.STAGING_HOST }}
+        DEPLOY_USER: ${{ secrets.STAGING_USER }}
+      run: |
+        mkdir -p ~/.ssh
+        echo "$DEPLOY_KEY" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+          $DEPLOY_USER@$DEPLOY_HOST \
+          'cd /opt/form2257 && git pull origin develop && docker-compose down && docker-compose up -d'
+
+  deploy-production:
+    needs: [ build, lint, code-quality ]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Create release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ github.run_number }}
+        release_name: Release v${{ github.run_number }}
+        draft: false
+        prerelease: false
+    
+    - name: Deploy to production
+      env:
+        DEPLOY_KEY: ${{ secrets.PROD_DEPLOY_KEY }}
+        DEPLOY_HOST: ${{ secrets.PROD_HOST }}
+        DEPLOY_USER: ${{ secrets.PROD_USER }}
+      run: |
+        mkdir -p ~/.ssh
+        echo "$DEPLOY_KEY" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+          $DEPLOY_USER@$DEPLOY_HOST \
+          'cd /opt/form2257 && git pull origin main && docker-compose down && docker-compose up -d'
+    
+    - name: Notify deployment
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        text: 'Form 2257 deployed to production'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+      if: always()
