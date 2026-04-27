@@ -11,27 +11,33 @@ public static class FormEndpoints
 
         group.MapPost("/producer", CreateProducerForm)
             .WithName("CreateProducerForm")
-            .WithDescription("Create a producer form and get a link for performers");
+            .WithDescription("Create a producer form and get a link for performers")
+            .AllowAnonymous();
 
         group.MapGet("/producer/{formId}", GetProducerForm)
             .WithName("GetProducerForm")
-            .WithDescription("Retrieve producer form data by ID");
+            .WithDescription("Retrieve producer form data by ID")
+            .AllowAnonymous();
 
         group.MapPost("/performer/{formId}", SubmitPerformerForm)
             .WithName("SubmitPerformerForm")
-            .WithDescription("Submit completed performer form with images");
+            .WithDescription("Submit completed performer form with images")
+            .AllowAnonymous();
 
         group.MapPost("/images/{formId}", UploadImage)
             .WithName("UploadImage")
-            .WithDescription("Upload ID image for the form");
+            .WithDescription("Upload ID image for the form")
+            .AllowAnonymous();
 
         group.MapPost("/validate-complete/{formId}", ValidateAndComplete)
             .WithName("ValidateAndComplete")
-            .WithDescription("Validate form completion and generate PDF");
+            .WithDescription("Validate form completion and generate PDF")
+            .AllowAnonymous();
 
         group.MapGet("/form/{formId}", GetFormData)
             .WithName("GetFormData")
-            .WithDescription("Get current form data");
+            .WithDescription("Get current form data")
+            .AllowAnonymous();
     }
 
     private static async Task<IResult> CreateProducerForm(

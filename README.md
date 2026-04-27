@@ -51,9 +51,103 @@ This application is built with:
    ```
 
 4. **Access the application**
-   - Open `http://localhost:5000` in your browser
+   - HTTP: Open `http://localhost:5000` in your browser
+   - HTTPS: `https://localhost:5001` (self-signed certificate auto-generated)
    - API documentation available at `http://localhost:5000/swagger`
    - Status page at `http://localhost:5000/api/status`
+
+**Note**: In development mode, a self-signed certificate (`cert.pfx`) is automatically generated on first run for HTTPS support on port 5001. Your browser will show a security warning for the self-signed cert, which is expected for local development.
+
+### Building and Running from Command Line
+
+#### macOS
+
+```bash
+# Restore dependencies
+dotnet restore
+
+# Build the application
+dotnet build -c Release
+
+# Run directly
+dotnet run --configuration Release
+
+# Or publish and run the published version
+dotnet publish -c Release -o ./publish
+cd publish
+./SignMy2257
+```
+
+Access the application at `http://localhost:5000`
+
+#### Linux
+
+```bash
+# Install .NET 9 SDK if not already installed
+# Ubuntu/Debian:
+wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
+chmod +x dotnet-install.sh
+./dotnet-install.sh --version latest
+
+# Fedora:
+sudo dnf install dotnet-sdk-9.0
+
+# Restore dependencies
+dotnet restore
+
+# Build the application
+dotnet build -c Release
+
+# Run directly
+dotnet run --configuration Release
+
+# Or publish and run
+dotnet publish -c Release -o ./publish
+cd publish
+./SignMy2257
+```
+
+Access the application at `http://localhost:5000`
+
+#### Windows (PowerShell)
+
+```powershell
+# Restore dependencies
+dotnet restore
+
+# Build the application
+dotnet build -c Release
+
+# Run directly
+dotnet run --configuration Release
+
+# Or publish and run the published version
+dotnet publish -c Release -o .\publish
+cd publish
+.\SignMy2257.exe
+```
+
+Access the application at `http://localhost:5000`
+
+#### Windows (Command Prompt)
+
+```batch
+REM Restore dependencies
+dotnet restore
+
+REM Build the application
+dotnet build -c Release
+
+REM Run directly
+dotnet run --configuration Release
+
+REM Or publish and run
+dotnet publish -c Release -o .\publish
+cd publish
+SignMy2257.exe
+```
+
+Access the application at `http://localhost:5000`
 
 ### Docker Deployment
 
@@ -75,6 +169,78 @@ docker run -d \
   -v form2257-logs:/app/logs \
   -e Storage__BasePath=/app/data \
   form2257
+```
+
+### Podman Deployment
+
+**Using Podman Compose:**
+
+```bash
+podman-compose up -d
+```
+
+The application will be available at `http://localhost:5000`
+
+**Using Podman CLI:**
+
+```bash
+# Build the image (native platform)
+podman build -t form2257 .
+
+# Or build for specific platform (macOS with Apple Silicon)
+podman build --platform linux/arm64 -t form2257:arm64 .
+
+# Or build for x86-64
+podman build --platform linux/amd64 -t form2257:amd64 .
+
+# Create volumes
+podman volume create form2257-data
+podman volume create form2257-logs
+
+# Run the container
+podman run -d \
+  --name form2257 \
+  -p 5000:5000 \
+  -v form2257-data:/app/data \
+  -v form2257-logs:/app/logs \
+  -e Storage__BasePath=/app/data \
+  form2257
+```
+
+**Building for ARM64 on Apple Silicon:**
+
+If you encounter "Illegal instruction" errors when building with `--platform linux/arm64`, the Dockerfile has been updated to use Ubuntu Jammy base images which have better ARM64 support. Simply rebuild:
+
+```bash
+podman build --platform linux/arm64 -t form2257:arm64 .
+```
+
+If issues persist, try building without specifying the platform (Podman will auto-detect):
+
+```bash
+podman build -t form2257 .
+```
+
+**Useful Podman Commands:**
+
+```bash
+# View running containers
+podman ps
+
+# View container logs
+podman logs form2257
+
+# Stop the container
+podman stop form2257
+
+# Remove the container
+podman rm form2257
+
+# View volumes
+podman volume ls
+
+# Inspect volume
+podman volume inspect form2257-data
 ```
 
 ## Configuration

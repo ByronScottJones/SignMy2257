@@ -1,3 +1,17 @@
 @using SignMy2257.Pages
+@using Microsoft.AspNetCore.Components.Routing
 
-<Routes />
+<Router AppAssembly="typeof(Program).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="routeData" />
+    </Found>
+    <NotFound>
+        <div class="container mt-5">
+            <div class="alert alert-warning">
+                <h4>Page not found</h4>
+                <p>Sorry, the page you requested was not found.</p>
+                <a href="/" class="btn btn-primary">Go Home</a>
+            </div>
+        </div>
+    </NotFound>
+</Router>

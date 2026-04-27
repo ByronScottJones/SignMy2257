@@ -98,5 +98,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## Version History
 
 | Version | Date       | Status      | Notes                    |
-|---------|-----------|------------|-------------------------|
-| 1.0.0   | 2026-04-24| Released   | Initial release          |
+|:--------|:-----------|:------------|:-------------------------|
+| 1.0.0   | 2026-04-24 | Released    | Initial release          |

@@ -2,7 +2,7 @@
 
 ## System Architecture
 
-```
+```text
 ┌──────────────────────────────────────────────────────────────┐
 │                      Client Browsers                         │
 │                 (Producer & Performer)                       │
@@ -148,6 +148,7 @@
 ## Technology Stack
 
 ### Backend
+
 - **Framework**: .NET 9 with Minimal APIs
 - **Web Framework**: ASP.NET Core
 - **PDF Generation**: QuestPDF (free/Community license)
@@ -155,12 +156,14 @@
 - **Data Format**: JSON (local files)
 
 ### Frontend
+
 - **UI Framework**: Razor Components with Blazor Server
 - **Styling**: Bootstrap 5
 - **Icons**: Font Awesome 6
 - **HTTP Client**: Built-in HttpClientFactory
 
 ### Infrastructure
+
 - **Containerization**: Docker with multi-stage builds
 - **Orchestration**: Docker Compose
 - **Reverse Proxy**: Nginx (optional, recommended for production)
@@ -168,7 +171,7 @@
 
 ## Security Architecture
 
-```
+```text
 ┌────────────────────────────────────────────────────────┐
 │                  Security Layers                       │
 ├────────────────────────────────────────────────────────┤
@@ -211,12 +214,14 @@
 ## Performance Considerations
 
 ### Scalability
+
 - **Stateless Design**: Application servers can be load-balanced
 - **Local Storage**: Can be replaced with S3/Azure Blob Storage
 - **Async/Await**: All I/O operations are asynchronous
 - **Connection Pooling**: Efficient HTTP client usage
 
 ### Optimization
+
 - **Minimal APIs**: Reduced overhead vs MVC
 - **Razor Components**: Server-side rendering for fast initial load
 - **Bootstrap 5**: Optimized CSS framework
@@ -225,6 +230,7 @@
 - **Compression**: GZIP compression on responses
 
 ### Resource Usage
+
 - **CPU**: Low (typically < 10% idle)
 - **Memory**: ~256MB base + buffer for concurrent requests
 - **Disk**: ~100MB for application + data storage
@@ -233,17 +239,20 @@
 ## Deployment Architectures
 
 ### Single Instance (Development/Small)
-```
+
+```text
 Internet → Nginx → Docker Container → Local Storage
 ```
 
 ### High Availability (Production)
-```
+
+```text
 Internet → CDN → Load Balancer → Multiple Containers → Shared Storage
 ```
 
 ### Kubernetes (Enterprise)
-```
+
+```text
 Internet → Ingress → Service → Multiple Pods → Persistent Volume
 ```
 
@@ -258,11 +267,13 @@ Internet → Ingress → Service → Multiple Pods → Persistent Volume
 ## Monitoring & Observability
 
 ### Health Checks
+
 - **Application Health**: GET /health
 - **Status Endpoint**: GET /api/status with statistics
 - **Docker Health Check**: Every 30 seconds
 
 ### Metrics Tracked
+
 - Forms created (daily, hourly)
 - Forms completed
 - Pending forms
@@ -271,6 +282,7 @@ Internet → Ingress → Service → Multiple Pods → Persistent Volume
 - Error rates
 
 ### Alerting (Optional)
+
 - High error rate (> 5%)
 - Disk space low (< 20% free)
 - Memory usage high (> 80%)
@@ -278,5 +290,5 @@ Internet → Ingress → Service → Multiple Pods → Persistent Volume
 
 ---
 
-**Last Updated**: April 24, 2026  
+**Last Updated**: April 24, 2026
 **Version**: 1.0.0

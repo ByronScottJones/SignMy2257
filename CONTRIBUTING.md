@@ -18,11 +18,14 @@ Please be respectful and professional in all interactions. We are committed to p
 
 1. Fork the repository on GitHub
 2. Clone your fork locally:
+
    ```bash
    git clone https://github.com/yourusername/SignMy2257.git
    cd SignMy2257
    ```
+
 3. Add upstream remote:
+
    ```bash
    git remote add upstream https://github.com/originalrepo/SignMy2257.git
    ```
@@ -36,6 +39,7 @@ git checkout -b feature/your-feature-name
 ```
 
 Branch naming conventions:
+
 - `feature/` for new features
 - `fix/` for bug fixes
 - `docs/` for documentation
@@ -53,6 +57,7 @@ Branch naming conventions:
    - Add XML documentation comments for public APIs
 
 3. Test your changes:
+
    ```bash
    dotnet build
    dotnet run
@@ -62,7 +67,7 @@ Branch naming conventions:
 
 Write clear, descriptive commit messages:
 
-```
+```text
 [feat] Add image cropping feature
 
 - Add image editor component for ID photos
@@ -74,6 +79,7 @@ Fixes #123
 ```
 
 Format:
+
 - Use imperative mood ("add" not "added")
 - Limit first line to 50 characters
 - Reference related issues with `Fixes #123` or `Closes #456`
@@ -81,6 +87,7 @@ Format:
 ### Push and Create Pull Request
 
 1. Push to your fork:
+
    ```bash
    git push origin feature/your-feature-name
    ```
